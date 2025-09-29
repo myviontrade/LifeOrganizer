@@ -1,0 +1,2420 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeOrganizer - Gestione Promemoria Intelligente</title>
+    <meta name="description" content="L'app definitiva per organizzare promemoria, attività e obiettivi. Semplice, potente e gratuita.">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json,{
+      \"name\": \"LifeOrganizer\",
+      \"short_name\": \"Organizer\", 
+      \"description\": \"Gestione promemoria intelligente\",
+      \"start_url\": \"./\",
+      \"display\": \"standalone\",
+      \"theme_color\": \"#4361ee\",
+      \"background_color\": \"#f0f2f5\",
+      \"icons\": [
+        {
+          \"src\": \"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%234361ee' rx='20'/><text x='50' y='60' font-family='Arial' font-size='40' text-anchor='middle' fill='white'>📅</text></svg>\",
+          \"sizes\": \"192x192\",
+          \"type\": \"image/svg+xml\"
+        }
+      ]
+    }">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --accent: #7209b7;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #4cc9f0;
+            --warning: #f72585;
+            --danger: #e63946;
+            --gray: #6c757d;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #6c757d;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-primary: #f0f0f0;
+            --text-secondary: #a0a0a0;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            transition: var(--transition);
+            line-height: 1.6;
+            padding-bottom: 70px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 15px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            background-color: var(--bg-color);
+            z-index: 10;
+        }
+
+        [data-theme="dark"] .header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 24px;
+            color: var(--primary);
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .theme-toggle {
+            background: var(--card-bg);
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            color: var(--text-primary);
+            font-size: 18px;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(30deg);
+        }
+
+        .date-display {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+
+        .current-date {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .current-day {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 5px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 80px;
+            background-color: var(--bg-color);
+            z-index: 10;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .add-reminder-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .add-reminder-btn:hover {
+            background: var(--secondary);
+        }
+
+        .reminder-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .reminder-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .reminder-item:hover {
+            transform: translateX(5px);
+        }
+
+        .reminder-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 16px;
+            color: white;
+        }
+
+        .reminder-info {
+            flex: 1;
+        }
+
+        .reminder-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .reminder-details {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .reminder-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-color);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-primary);
+        }
+
+        .action-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .accept-btn {
+            background-color: var(--success);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: var(--transition);
+        }
+
+        .accept-btn:hover {
+            background-color: #3aa5cf;
+        }
+
+        .category-filters {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .category-filter {
+            padding: 10px;
+            border-radius: 12px;
+            background: var(--card-bg);
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        .category-filter.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-header {
+            grid-column: span 7;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 140px;
+            background-color: var(--bg-color);
+            z-index: 10;
+            padding: 10px 0;
+        }
+
+        .calendar-nav {
+            background: var(--primary);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .weekday {
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-secondary);
+            padding: 10px 0;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .calendar-day:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .calendar-day.today {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        .calendar-day.selected {
+            background-color: var(--success);
+            color: white;
+            font-weight: 600;
+        }
+
+        .calendar-day.has-reminder::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            width: 6px;
+            height: 6px;
+            background-color: var(--success);
+            border-radius: 50%;
+        }
+
+        .calendar-day.other-month {
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .category-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .category-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .category-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .category-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .category-count {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .chart-container {
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 0 10px;
+        }
+
+        .chart-bar {
+            width: 40px;
+            background: var(--primary);
+            border-radius: 8px 8px 0 0;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .chart-bar:hover {
+            opacity: 0.8;
+        }
+
+        .chart-label {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            animation: modalAppear 0.3s ease;
+            margin: auto;
+        }
+
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            background-color: var(--card-bg);
+            z-index: 10;
+        }
+
+        [data-theme="dark"] .modal-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        [data-theme="dark"] .form-input, 
+        [data-theme="dark"] .form-select, 
+        [data-theme="dark"] .form-textarea {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            position: sticky;
+            bottom: 0;
+            background-color: var(--card-bg);
+            z-index: 10;
+        }
+
+        [data-theme="dark"] .modal-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary);
+        }
+
+        .btn-secondary {
+            background: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--text-secondary);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d41c68;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+        }
+
+        .category-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .footer-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-banner-content {
+            flex: 1;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .footer-banner-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .category-manager {
+            margin-bottom: 20px;
+        }
+
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .category-item-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .manage-categories-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .manage-categories-btn:hover {
+            background: var(--primary);
+        }
+
+        /* Responsive */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 600px;
+            }
+            
+            .stats-grid, .categories-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .category-filters {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .reminder-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .reminder-icon {
+                margin-bottom: 10px;
+            }
+            
+            .reminder-actions {
+                align-self: flex-end;
+                margin-top: 10px;
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .accept-btn {
+                margin-top: 10px;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .modal-body {
+                max-height: 60vh;
+            }
+
+            .categories-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .calendar-day {
+                font-size: 14px;
+            }
+
+            .category-filters {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-calendar-check"></i></div>
+                <div class="logo-text">Life Organizer</div>
+            </div>
+            <button class="theme-toggle" id="theme-toggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+
+        <div class="date-display">
+            <div class="current-day" id="current-day">Mercoledì</div>
+            <div class="current-date" id="current-date">28 Giugno 2023</div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="today">Oggi</div>
+            <div class="tab" data-tab="calendar">Calendario</div>
+            <div class="tab" data-tab="categories">Categorie</div>
+            <div class="tab" data-tab="stats">Statistiche</div>
+        </div>
+
+        <div class="category-filters" id="category-filters">
+            <!-- Dynamic content will be added here -->
+        </div>
+
+        <!-- TODAY TAB -->
+        <div class="tab-content active" id="today-tab">
+            <div class="section-title">
+                <i class="fas fa-list"></i>
+                I tuoi promemoria per oggi
+            </div>
+
+            <button class="add-reminder-btn" id="add-reminder-btn">
+                <i class="fas fa-plus"></i> Aggiungi promemoria
+            </button>
+
+            <div class="reminder-list" id="today-reminders">
+                <!-- Dynamic content will be added here -->
+            </div>
+
+            <div class="section-title">
+                <i class="fas fa-clock"></i>
+                Prossimi promemoria
+            </div>
+
+            <div class="reminder-list" id="upcoming-reminders">
+                <!-- Dynamic content will be added here -->
+            </div>
+        </div>
+
+        <!-- CALENDAR TAB -->
+        <div class="tab-content" id="calendar-tab">
+            <div class="card">
+                <div class="calendar-header">
+                    <div class="calendar-nav" id="calendar-prev">
+                        <i class="fas fa-chevron-left"></i>
+                    </div>
+                    <div id="calendar-month-year">Settembre 2023</div>
+                    <div class="calendar-nav" id="calendar-next">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                
+                <div class="calendar" id="calendar-days">
+                    <!-- Calendar will be generated here -->
+                </div>
+            </div>
+
+            <div class="section-title">
+                <i class="fas fa-calendar-day"></i>
+                Promemoria del giorno selezionato
+            </div>
+
+            <div class="reminder-list" id="calendar-reminders">
+                <!-- Dynamic content will be added here -->
+            </div>
+        </div>
+
+        <!-- CATEGORIES TAB -->
+        <div class="tab-content" id="categories-tab">
+            <button class="manage-categories-btn" id="manage-categories-btn">
+                <i class="fas fa-cog"></i> Gestisci Categorie
+            </button>
+
+            <div class="categories-grid" id="categories-grid">
+                <!-- Dynamic content will be added here -->
+            </div>
+
+            <div class="section-title">
+                <i class="fas fa-list"></i>
+                Tutti i promemoria
+            </div>
+
+            <div class="reminder-list" id="categories-reminders">
+                <!-- Dynamic content will be added here -->
+            </div>
+        </div>
+
+        <!-- STATISTICS TAB -->
+        <div class="tab-content" id="stats-tab">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-reminders">0</div>
+                    <div class="stat-label">Promemoria totali</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="completed-reminders">0</div>
+                    <div class="stat-label">Completati</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="upcoming-reminders-count">0</div>
+                    <div class="stat-label">In scadenza</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="overdue-reminders">0</div>
+                    <div class="stat-label">In ritardo</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Statistiche per categoria
+                </div>
+                
+                <div class="chart-container" id="category-chart">
+                    <!-- Chart will be generated here -->
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">
+                    <i class="fas fa-tasks"></i>
+                    Riepilogo completamento
+                </div>
+                
+                <div class="chart-container" id="completion-chart">
+                    <!-- Chart will be generated here -->
+                </div>
+            </div>
+
+            <!-- Sezione Prodotti Consigliati -->
+            <div class="card" id="amazon-products" style="display: none;">
+                <div class="section-title">
+                    <i class="fas fa-store"></i>
+                    Prodotti Consigliati
+                </div>
+                <div style="text-align: center; padding: 20px;">
+                    <p>Migliora la tua produttività:</p>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px;">
+                        <a href="https://amzn.to/3RKhT7x" target="_blank" style="text-decoration: none; color: inherit;">
+                            <div style="background: var(--card-bg); padding: 10px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 24px;">📓</div>
+                                <div style="font-size: 12px;">Agenda 2024</div>
+                            </div>
+                        </a>
+                        <a href="https://amzn.to/3x1Y9P8" target="_blank" style="text-decoration: none; color: inherit;">
+                            <div style="background: var(--card-bg); padding: 10px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 24px;">⏰</div>
+                                <div style="font-size: 12px;">Timer Pomodoro</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div class="modal" id="add-reminder-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Aggiungi promemoria</h3>
+                <button class="modal-close" id="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="reminder-title">Titolo</label>
+                    <input type="text" class="form-input" id="reminder-title" placeholder="Es. Visita dal dentista">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="reminder-category">Categoria</label>
+                    <select class="form-select" id="reminder-category"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="reminder-date">Data</label>
+                    <input type="date" class="form-input" id="reminder-date">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="reminder-time">Ora (opzionale)</label>
+                    <input type="time" class="form-input" id="reminder-time">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="reminder-notes">Note (opzionale)</label>
+                    <textarea class="form-textarea" id="reminder-notes" placeholder="Aggiungi note aggiuntive..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-btn">Annulla</button>
+                <button class="btn btn-primary" id="save-reminder-btn">Salva Promemoria</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="view-reminder-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Dettaglio Promemoria</h3>
+                <button class="modal-close" id="view-modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Titolo</label>
+                    <div class="form-input" id="view-title" style="background-color: var(--bg-color);"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Categoria</label>
+                    <div class="form-input" id="view-category" style="background-color: var(--bg-color);"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Data</label>
+                    <div class="form-input" id="view-date" style="background-color: var(--bg-color);"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ora</label>
+                    <div class="form-input" id="view-time" style="background-color: var(--bg-color);"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Note</label>
+                    <div class="form-input" id="view-notes" style="background-color: var(--bg-color); min-height: 100px;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="view-close-btn">Chiudi</button>
+                <button class="btn btn-warning" id="edit-reminder-btn">Modifica</button>
+                <button class="btn btn-primary" id="confirm-reminder-btn">Conferma Promemoria</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="edit-reminder-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Modifica Promemoria</h3>
+                <button class="modal-close" id="edit-modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="edit-reminder-title">Titolo</label>
+                    <input type="text" class="form-input" id="edit-reminder-title">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit-reminder-category">Categoria</label>
+                    <select class="form-select" id="edit-reminder-category"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit-reminder-date">Data</label>
+                    <input type="date" class="form-input" id="edit-reminder-date">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit-reminder-time">Ora (opzionale)</label>
+                    <input type="time" class="form-input" id="edit-reminder-time">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit-reminder-notes">Note (opzionale)</label>
+                    <textarea class="form-textarea" id="edit-reminder-notes"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="edit-cancel-btn">Annulla</button>
+                <button class="btn btn-primary" id="update-reminder-btn">Aggiorna Promemoria</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="manage-categories-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Gestisci Categorie</h3>
+                <button class="modal-close" id="manage-categories-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="new-category-name">Nuova Categoria</label>
+                    <div class="form-input" style="display: flex; padding: 0;">
+                        <input type="text" class="form-input" id="new-category-name" placeholder="Nome categoria" style="border: none; border-radius: 12px 0 0 12px;">
+                        <button class="btn btn-primary" id="add-category-btn" style="border-radius: 0 12px 12px 0;">Aggiungi</button>
+                    </div>
+                </div>
+                <div class="section-title">
+                    <i class="fas fa-list"></i>
+                    Categorie Esistenti
+                </div>
+                <div id="categories-list"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="manage-categories-close-btn">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Banner Donazioni -->
+    <div id="donation-banner" style="position: fixed; bottom: 60px; left: 0; right: 0; background: var(--primary); color: white; padding: 10px; text-align: center; z-index: 99; display: none;">
+        <span>Supporta lo sviluppo! 🚀</span>
+        <button onclick="showDonationOptions()" style="margin-left: 10px; background: white; color: var(--primary); border: none; padding: 5px 10px; border-radius: 5px; font-weight: bold;">Dona</button>
+        <button onclick="closeDonationBanner()" style="background: transparent; border: none; color: white; margin-left: 10px;">✕</button>
+    </div>
+
+    <!-- Pulsanti Export/Import -->
+    <div style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
+        <button onclick="exportData()" style="background: var(--success); color: white; border: none; padding: 8px 12px; border-radius: 20px; font-size: 12px; margin: 2px;">
+            <i class="fas fa-download"></i> Export
+        </button>
+        <label style="background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 20px; font-size: 12px; margin: 2px; cursor: pointer;">
+            <i class="fas fa-upload"></i> Import
+            <input type="file" accept=".json" onchange="importData(event)" style="display: none;">
+        </label>
+    </div>
+
+    <!-- Footer con Privacy Policy -->
+    <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+        <a href="javascript:void(0)" onclick="showPrivacyPolicy()" style="color: var(--primary);">Privacy Policy</a> 
+    </div>
+
+    <div class="footer-banner">
+        <div class="footer-banner-content">
+            <span>Shared with</span> 
+            <strong>tiny.h@s</strong> 
+            <span>Upload for free</span>
+        </div>
+        <button class="footer-banner-close" id="banner-close">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <script>
+        // ===== JAVASCRIPT PRINCIPALE =====
+        // Data and State Management
+        let reminders = JSON.parse(localStorage.getItem('reminders')) || [];
+        let categories = JSON.parse(localStorage.getItem('categories')) || [
+            { id: 'health', name: 'Salute', icon: 'fa-heart', color: '#4cc9f0' },
+            { id: 'work', name: 'Lavoro', icon: 'fa-briefcase', color: '#7209b7' },
+            { id: 'personal', name: 'Personale', icon: 'fa-user', color: '#f72585' },
+            { id: 'bills', name: 'Bollette', icon: 'fa-file-invoice-dollar', color: '#fb8500' }
+        ];
+        let currentCategory = 'all';
+        let currentCalendarDate = new Date();
+        let selectedCalendarDay = null;
+        let currentEditingReminderId = null;
+
+        // DOM Elements
+        const themeToggle = document.getElementById('theme-toggle');
+        const currentDayElement = document.getElementById('current-day');
+        const currentDateElement = document.getElementById('current-date');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const categoryFiltersContainer = document.getElementById('category-filters');
+        const todayRemindersList = document.getElementById('today-reminders');
+        const upcomingRemindersList = document.getElementById('upcoming-reminders');
+        const calendarRemindersList = document.getElementById('calendar-reminders');
+        const categoriesRemindersList = document.getElementById('categories-reminders');
+        const addReminderBtn = document.getElementById('add-reminder-btn');
+        const addReminderModal = document.getElementById('add-reminder-modal');
+        const viewReminderModal = document.getElementById('view-reminder-modal');
+        const editReminderModal = document.getElementById('edit-reminder-modal');
+        const manageCategoriesModal = document.getElementById('manage-categories-modal');
+        const modalClose = document.getElementById('modal-close');
+        const viewModalClose = document.getElementById('view-modal-close');
+        const editModalClose = document.getElementById('edit-modal-close');
+        const manageCategoriesClose = document.getElementById('manage-categories-close');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const saveReminderBtn = document.getElementById('save-reminder-btn');
+        const viewCloseBtn = document.getElementById('view-close-btn');
+        const confirmReminderBtn = document.getElementById('confirm-reminder-btn');
+        const editReminderBtn = document.getElementById('edit-reminder-btn');
+        const editCancelBtn = document.getElementById('edit-cancel-btn');
+        const updateReminderBtn = document.getElementById('update-reminder-btn');
+        const bannerClose = document.getElementById('banner-close');
+        const calendarPrev = document.getElementById('calendar-prev');
+        const calendarNext = document.getElementById('calendar-next');
+        const calendarMonthYear = document.getElementById('calendar-month-year');
+        const calendarDays = document.getElementById('calendar-days');
+        const manageCategoriesBtn = document.getElementById('manage-categories-btn');
+        const addCategoryBtn = document.getElementById('add-category-btn');
+        const newCategoryName = document.getElementById('new-category-name');
+        const categoriesList = document.getElementById('categories-list');
+        const manageCategoriesCloseBtn = document.getElementById('manage-categories-close-btn');
+        const categoriesGrid = document.getElementById('categories-grid');
+
+        // Initialize the app
+        function init() {
+            setCurrentDate();
+            setupEventListeners();
+            renderReminders();
+            loadTheme();
+            generateCalendar();
+            updateStats();
+            updateCategoryCounts();
+            renderCategoryFilters();
+            renderCategoryOptions();
+            renderCategoriesGrid();
+            
+            // Set today as selected in calendar if in calendar tab
+            if (document.getElementById('calendar-tab').classList.contains('active')) {
+                const today = new Date();
+                selectedCalendarDay = today;
+                generateCalendar();
+            }
+        }
+
+        // Set current date
+        function setCurrentDate() {
+            const now = new Date();
+            const days = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
+            const months = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+            
+            currentDayElement.textContent = days[now.getDay()];
+            currentDateElement.textContent = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+        }
+
+        // Save data to localStorage
+        function saveReminders() {
+            localStorage.setItem('reminders', JSON.stringify(reminders));
+        }
+
+        function saveCategories() {
+            localStorage.setItem('categories', JSON.stringify(categories));
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Theme toggle
+            themeToggle.addEventListener('click', toggleTheme);
+            
+            // Tab switching
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
+            
+            // Modal controls
+            addReminderBtn.addEventListener('click', openAddReminderModal);
+            modalClose.addEventListener('click', closeAddReminderModal);
+            viewModalClose.addEventListener('click', closeViewReminderModal);
+            editModalClose.addEventListener('click', closeEditReminderModal);
+            manageCategoriesClose.addEventListener('click', closeManageCategoriesModal);
+            cancelBtn.addEventListener('click', closeAddReminderModal);
+            viewCloseBtn.addEventListener('click', closeViewReminderModal);
+            editCancelBtn.addEventListener('click', closeEditReminderModal);
+            manageCategoriesCloseBtn.addEventListener('click', closeManageCategoriesModal);
+            saveReminderBtn.addEventListener('click', saveReminder);
+            confirmReminderBtn.addEventListener('click', confirmReminder);
+            editReminderBtn.addEventListener('click', openEditReminderModal);
+            updateReminderBtn.addEventListener('click', updateReminder);
+            manageCategoriesBtn.addEventListener('click', openManageCategoriesModal);
+            addCategoryBtn.addEventListener('click', addCategory);
+            
+            // Banner close
+            bannerClose.addEventListener('click', () => {
+                document.querySelector('.footer-banner').style.display = 'none';
+            });
+            
+            // Calendar navigation
+            calendarPrev.addEventListener('click', () => {
+                currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+                generateCalendar();
+            });
+            
+            calendarNext.addEventListener('click', () => {
+                currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+                generateCalendar();
+            });
+
+            // Prevent modal from closing when clicking inside
+            document.querySelectorAll('.modal-content').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            });
+
+            // Close modal when clicking outside
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // Theme management
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Update icon
+            const icon = themeToggle.querySelector('i');
+            icon.className = newTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            
+            // Update icon
+            const icon = themeToggle.querySelector('i');
+            icon.className = savedTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        // Tab switching
+        function switchTab(tabId) {
+            // Update active tab
+            tabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabId) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            // Update active content
+            tabContents.forEach(content => {
+                if (content.id === `${tabId}-tab`) {
+                    content.classList.add('active');
+                    
+                    // Refresh content if needed
+                    if (tabId === 'calendar') {
+                        generateCalendar();
+                    } else if (tabId === 'stats') {
+                        updateStats();
+                    } else if (tabId === 'categories') {
+                        updateCategoryCounts();
+                        renderCategoryReminders();
+                    }
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+        }
+
+        // Category filtering
+        function filterCategory(category) {
+            currentCategory = category;
+            
+            // Update active filter in ALL filter containers
+            document.querySelectorAll('.category-filter').forEach(filter => {
+                if (filter.getAttribute('data-category') === category) {
+                    filter.classList.add('active');
+                } else {
+                    filter.classList.remove('active');
+                }
+            });
+            
+            // Re-render reminders based on current tab
+            const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
+            
+            switch(activeTab) {
+                case 'today':
+                    renderReminders();
+                    break;
+                case 'calendar':
+                    generateCalendar();
+                    if (selectedCalendarDay) {
+                        const year = selectedCalendarDay.getFullYear();
+                        const month = String(selectedCalendarDay.getMonth() + 1).padStart(2, '0');
+                        const day = String(selectedCalendarDay.getDate()).padStart(2, '0');
+                        const dateStr = `${year}-${month}-${day}`;
+                        
+                        let dayReminders = reminders.filter(r => r.date === dateStr && !r.completed);
+                        
+                        // Apply category filter if needed
+                        if (currentCategory !== 'all') {
+                            dayReminders = dayReminders.filter(r => r.category === currentCategory);
+                        }
+                        
+                        showDayReminders(dayReminders, dateStr);
+                    }
+                    break;
+                case 'categories':
+                    renderCategoryReminders();
+                    break;
+                case 'stats':
+                    updateStats();
+                    break;
+            }
+            
+            // Update category counts
+            updateCategoryCounts();
+        }
+
+        // Render category filters
+        function renderCategoryFilters() {
+            categoryFiltersContainer.innerHTML = '';
+            
+            // Add "All" filter
+            const allFilter = document.createElement('button');
+            allFilter.className = `category-filter ${currentCategory === 'all' ? 'active' : ''}`;
+            allFilter.setAttribute('data-category', 'all');
+            allFilter.textContent = 'Tutti';
+            allFilter.addEventListener('click', () => filterCategory('all'));
+            categoryFiltersContainer.appendChild(allFilter);
+            
+            // Add category filters
+            categories.forEach(category => {
+                const filter = document.createElement('button');
+                filter.className = `category-filter ${currentCategory === category.id ? 'active' : ''}`;
+                filter.setAttribute('data-category', category.id);
+                filter.textContent = category.name;
+                filter.addEventListener('click', () => filterCategory(category.id));
+                categoryFiltersContainer.appendChild(filter);
+            });
+        }
+
+        // Generate calendar
+        function generateCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            
+            const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 
+                               'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+            
+            calendarMonthYear.textContent = `${monthNames[month]} ${year}`;
+            
+            // Clear previous calendar
+            calendarDays.innerHTML = '';
+            
+            // Add weekdays header
+            const weekdays = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+            weekdays.forEach(day => {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'weekday';
+                dayElement.textContent = day;
+                calendarDays.appendChild(dayElement);
+            });
+            
+            // Get first day of month and total days
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            // Adjust for Monday as first day of week
+            let startDay = firstDay === 0 ? 6 : firstDay - 1;
+            
+            // Add empty days for previous month
+            for (let i = 0; i < startDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day other-month';
+                calendarDays.appendChild(emptyDay);
+            }
+            
+            // Add days of current month
+            const today = new Date();
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.textContent = i;
+                
+                // Check if it's today
+                if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    dayElement.classList.add('today');
+                }
+                
+                // Check if it's the selected day
+                if (selectedCalendarDay && 
+                    i === selectedCalendarDay.getDate() && 
+                    month === selectedCalendarDay.getMonth() && 
+                    year === selectedCalendarDay.getFullYear()) {
+                    dayElement.classList.add('selected');
+                }
+                
+                // Check if there are reminders for this day (considering current filter)
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                let dayReminders = reminders.filter(r => r.date === dateStr && !r.completed);
+                
+                // Apply category filter if needed
+                if (currentCategory !== 'all') {
+                    dayReminders = dayReminders.filter(r => r.category === currentCategory);
+                }
+                
+                if (dayReminders.length > 0) {
+                    dayElement.classList.add('has-reminder');
+                }
+                
+                // Add click event to show reminders for this day
+                dayElement.addEventListener('click', () => {
+                    // Remove selected class from all days
+                    document.querySelectorAll('.calendar-day').forEach(day => {
+                        day.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked day
+                    dayElement.classList.add('selected');
+                    
+                    // Set the selected day
+                    selectedCalendarDay = new Date(year, month, i);
+                    
+                    // Get reminders for this day (considering current category filter)
+                    let dayReminders = reminders.filter(r => r.date === dateStr && !r.completed);
+                    
+                    // Apply category filter if needed
+                    if (currentCategory !== 'all') {
+                        dayReminders = dayReminders.filter(r => r.category === currentCategory);
+                    }
+                    
+                    // Show reminders for this day
+                    showDayReminders(dayReminders, dateStr);
+                });
+                
+                calendarDays.appendChild(dayElement);
+            }
+            
+            // If no day is selected, select today if it's in the current month view
+            if (!selectedCalendarDay && month === today.getMonth() && year === today.getFullYear()) {
+                const todayElement = document.querySelector(`.calendar-day.today`);
+                if (todayElement) {
+                    todayElement.click();
+                }
+            }
+        }
+
+        function showDayReminders(reminders, dateStr) {
+            const date = new Date(dateStr);
+            const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+            
+            if (reminders.length === 0) {
+                calendarRemindersList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-plus"></i>
+                        <p>Nessun promemoria per il ${formattedDate}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            calendarRemindersList.innerHTML = '';
+            
+            reminders.forEach(reminder => {
+                const reminderElement = createReminderElement(reminder);
+                calendarRemindersList.appendChild(reminderElement);
+            });
+        }
+
+        // Modal controls
+        function openAddReminderModal() {
+            // Set today's date as default
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0];
+            document.getElementById('reminder-date').value = formattedDate;
+            
+            addReminderModal.style.display = 'flex';
+        }
+
+        function closeAddReminderModal() {
+            addReminderModal.style.display = 'none';
+            // Reset form
+            document.getElementById('reminder-title').value = '';
+            document.getElementById('reminder-date').value = '';
+            document.getElementById('reminder-time').value = '';
+            document.getElementById('reminder-notes').value = '';
+        }
+
+        function openViewReminderModal(reminder) {
+            document.getElementById('view-title').textContent = reminder.title;
+            
+            const category = categories.find(c => c.id === reminder.category);
+            document.getElementById('view-category').textContent = category ? category.name : reminder.category;
+            document.getElementById('view-date').textContent = formatDateForView(reminder.date);
+            document.getElementById('view-time').textContent = reminder.time || 'Non specificata';
+            document.getElementById('view-notes').textContent = reminder.notes || 'Nessuna nota';
+            
+            // Store the current reminder ID for the confirm button
+            confirmReminderBtn.setAttribute('data-id', reminder.id);
+            editReminderBtn.setAttribute('data-id', reminder.id);
+            
+            viewReminderModal.style.display = 'flex';
+        }
+
+        function closeViewReminderModal() {
+            viewReminderModal.style.display = 'none';
+        }
+
+        function openEditReminderModal() {
+            const id = parseInt(editReminderBtn.getAttribute('data-id'));
+            const reminder = reminders.find(r => r.id === id);
+            
+            if (reminder) {
+                document.getElementById('edit-reminder-title').value = reminder.title;
+                document.getElementById('edit-reminder-category').value = reminder.category;
+                document.getElementById('edit-reminder-date').value = reminder.date;
+                document.getElementById('edit-reminder-time').value = reminder.time || '';
+                document.getElementById('edit-reminder-notes').value = reminder.notes || '';
+                
+                currentEditingReminderId = id;
+                viewReminderModal.style.display = 'none';
+                editReminderModal.style.display = 'flex';
+            }
+        }
+
+        function closeEditReminderModal() {
+            editReminderModal.style.display = 'none';
+        }
+
+        function openManageCategoriesModal() {
+            renderCategoriesList();
+            manageCategoriesModal.style.display = 'flex';
+        }
+
+        function closeManageCategoriesModal() {
+            manageCategoriesModal.style.display = 'none';
+            newCategoryName.value = '';
+        }
+
+        function formatDateForView(dateString) {
+            const date = new Date(dateString);
+            const day = date.getDate();
+            const month = date.getMonth() + 1;
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        // Category management
+        function addCategory() {
+            const name = newCategoryName.value.trim();
+            
+            if (!name) {
+                alert('Inserisci un nome per la categoria!');
+                return;
+            }
+            
+            const key = name.toLowerCase().replace(/\s+/g, '_');
+            
+            if (categories.find(c => c.id === key)) {
+                alert('Questa categoria esiste già!');
+                return;
+            }
+            
+            categories.push({
+                id: key,
+                name: name,
+                icon: 'fa-tag',
+                color: getRandomColor()
+            });
+            
+            saveCategories();
+            renderCategoryFilters();
+            renderCategoryOptions();
+            renderCategoriesList();
+            renderCategoriesGrid();
+            newCategoryName.value = '';
+            
+            showNotification('Categoria aggiunta con successo!');
+        }
+
+        function removeCategory(categoryId) {
+            if (['health', 'work', 'personal', 'bills'].includes(categoryId)) {
+                alert('Non puoi eliminare le categorie predefinite!');
+                return;
+            }
+            
+            if (confirm('Sei sicuro di voler eliminare questa categoria? Tutti i promemoria associati verranno spostati nella categoria "Personale".')) {
+                // Move reminders to personal category
+                reminders = reminders.map(reminder => {
+                    if (reminder.category === categoryId) {
+                        return { ...reminder, category: 'personal' };
+                    }
+                    return reminder;
+                });
+                
+                // Remove category
+                categories = categories.filter(c => c.id !== categoryId);
+                saveCategories();
+                saveReminders();
+                renderCategoryFilters();
+                renderCategoryOptions();
+                renderCategoriesList();
+                renderCategoriesGrid();
+                renderReminders();
+                updateStats();
+                updateCategoryCounts();
+                
+                showNotification('Categoria eliminata con successo!');
+            }
+        }
+
+        function renderCategoriesList() {
+            categoriesList.innerHTML = '';
+            
+            categories.forEach(category => {
+                const count = reminders.filter(r => r.category === category.id).length;
+                
+                const categoryItem = document.createElement('div');
+                categoryItem.className = 'category-item';
+                
+                categoryItem.innerHTML = `
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fas ${category.icon}" style="color: ${category.color};"></i>
+                            <span>${category.name}</span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">${count} promemoria</div>
+                    </div>
+                    <div class="category-item-actions">
+                        ${!['health', 'work', 'personal', 'bills'].includes(category.id) ? 
+                            `<button class="action-btn delete-category-btn" data-category="${category.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>` : 
+                            '<div style="width: 36px;"></div>'
+                        }
+                    </div>
+                `;
+                
+                categoriesList.appendChild(categoryItem);
+            });
+            
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-category-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const categoryId = btn.getAttribute('data-category');
+                    removeCategory(categoryId);
+                });
+            });
+        }
+
+        function renderCategoryOptions() {
+            const categorySelects = [
+                document.getElementById('reminder-category'),
+                document.getElementById('edit-reminder-category')
+            ];
+            
+            categorySelects.forEach(select => {
+                if (select) {
+                    select.innerHTML = '';
+                    
+                    categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category.id;
+                        option.textContent = category.name;
+                        select.appendChild(option);
+                    });
+                }
+            });
+        }
+
+        function renderCategoriesGrid() {
+            categoriesGrid.innerHTML = '';
+            
+            categories.forEach(category => {
+                const count = reminders.filter(r => r.category === category.id).length;
+                
+                const categoryCard = document.createElement('div');
+                categoryCard.className = 'category-card';
+                categoryCard.setAttribute('data-category', category.id);
+                categoryCard.innerHTML = `
+                    <div class="category-icon">
+                        <i class="fas ${category.icon}" style="color: ${category.color};"></i>
+                    </div>
+                    <div class="category-name">${category.name}</div>
+                    <div class="category-count">${count} promemoria</div>
+                `;
+                
+                categoryCard.addEventListener('click', () => {
+                    filterCategory(category.id);
+                    switchTab('categories');
+                });
+                
+                categoriesGrid.appendChild(categoryCard);
+            });
+        }
+
+        // Render reminders based on current category
+        function renderReminders() {
+            // Filter reminders based on category
+            let filteredReminders = reminders;
+            if (currentCategory !== 'all') {
+                filteredReminders = reminders.filter(reminder => reminder.category === currentCategory);
+            }
+            
+            // Separate today's reminders and upcoming reminders
+            const today = new Date().toDateString();
+            const todayReminders = filteredReminders.filter(reminder => {
+                const reminderDate = new Date(reminder.date).toDateString();
+                return reminderDate === today && !reminder.completed;
+            });
+            
+            const upcomingReminders = filteredReminders.filter(reminder => {
+                const reminderDate = new Date(reminder.date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return reminderDate >= today && !reminder.completed;
+            }).sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            // Render today's reminders
+            renderReminderList(todayReminders, todayRemindersList);
+            
+            // Render upcoming reminders
+            renderReminderList(upcomingReminders, upcomingRemindersList);
+        }
+
+        // Render category reminders
+        function renderCategoryReminders() {
+            let filteredReminders = reminders;
+            if (currentCategory !== 'all') {
+                filteredReminders = reminders.filter(reminder => reminder.category === currentCategory);
+            }
+            
+            if (filteredReminders.length === 0) {
+                categoriesRemindersList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-plus"></i>
+                        <p>Nessun promemoria</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            categoriesRemindersList.innerHTML = '';
+            
+            filteredReminders.forEach(reminder => {
+                const reminderElement = createReminderElement(reminder);
+                categoriesRemindersList.appendChild(reminderElement);
+            });
+        }
+
+        // Render a list of reminders
+        function renderReminderList(remindersArray, container) {
+            if (remindersArray.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-plus"></i>
+                        <p>Nessun promemoria</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            remindersArray.forEach(reminder => {
+                const reminderElement = createReminderElement(reminder);
+                container.appendChild(reminderElement);
+            });
+        }
+
+        // Create a reminder element
+        function createReminderElement(reminder) {
+            const reminderDate = new Date(reminder.date);
+            const now = new Date();
+            const isPast = reminderDate < now && reminderDate.toDateString() !== now.toDateString();
+            
+            const category = categories.find(c => c.id === reminder.category) || { 
+                color: '#4361ee', 
+                icon: 'fa-tag',
+                name: reminder.category
+            };
+            
+            const element = document.createElement('div');
+            element.className = `reminder-item ${isPast ? 'past' : ''}`;
+            element.innerHTML = `
+                <div class="reminder-icon" style="background-color: ${category.color}">
+                    <i class="fas ${category.icon}"></i>
+                </div>
+                <div class="reminder-info">
+                    <div class="reminder-title">${reminder.title}</div>
+                    <div class="reminder-details">
+                        <span class="category-color" style="background-color: ${category.color}"></span>
+                        ${category.name} • 
+                        ${formatDate(reminder.date)} ${reminder.time ? '• ' + reminder.time : ''}
+                    </div>
+                    ${reminder.notes ? `<div class="reminder-details">${reminder.notes}</div>` : ''}
+                </div>
+                <div class="reminder-actions">
+                    <button class="accept-btn view-btn" data-id="${reminder.id}">
+                        <i class="fas fa-eye"></i> Dettagli
+                    </button>
+                    <button class="action-btn delete-btn" data-id="${reminder.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            
+            // Add event listeners to action buttons
+            const viewBtn = element.querySelector('.view-btn');
+            const deleteBtn = element.querySelector('.delete-btn');
+            
+            viewBtn.addEventListener('click', () => openViewReminderModal(reminder));
+            deleteBtn.addEventListener('click', () => deleteReminder(reminder.id));
+            
+            return element;
+        }
+
+        // Save new reminder
+        function saveReminder() {
+            const title = document.getElementById('reminder-title').value.trim();
+            const category = document.getElementById('reminder-category').value;
+            const date = document.getElementById('reminder-date').value;
+            const time = document.getElementById('reminder-time').value;
+            const notes = document.getElementById('reminder-notes').value.trim();
+            
+            if (!title || !date) {
+                alert('Inserisci almeno un titolo e una data!');
+                return;
+            }
+            
+            const newReminder = {
+                id: Date.now(),
+                title,
+                category,
+                date,
+                time,
+                notes,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+            
+            reminders.push(newReminder);
+            saveReminders();
+            renderReminders();
+            generateCalendar();
+            updateStats();
+            updateCategoryCounts();
+            closeAddReminderModal();
+            
+            // Show confirmation
+            showNotification('Promemoria aggiunto con successo!');
+        }
+
+        function updateReminder() {
+            const title = document.getElementById('edit-reminder-title').value.trim();
+            const category = document.getElementById('edit-reminder-category').value;
+            const date = document.getElementById('edit-reminder-date').value;
+            const time = document.getElementById('edit-reminder-time').value;
+            const notes = document.getElementById('edit-reminder-notes').value.trim();
+            
+            if (!title || !date) {
+                alert('Inserisci almeno un titolo e una data!');
+                return;
+            }
+            
+            reminders = reminders.map(reminder => {
+                if (reminder.id === currentEditingReminderId) {
+                    return { 
+                        ...reminder, 
+                        title, 
+                        category, 
+                        date, 
+                        time, 
+                        notes 
+                    };
+                }
+                return reminder;
+            });
+            
+            saveReminders();
+            renderReminders();
+            generateCalendar();
+            updateStats();
+            updateCategoryCounts();
+            closeEditReminderModal();
+            
+            // Show confirmation
+            showNotification('Promemoria aggiornato con successo!');
+        }
+
+        function confirmReminder() {
+            const id = parseInt(confirmReminderBtn.getAttribute('data-id'));
+            
+            reminders = reminders.map(reminder => {
+                if (reminder.id === id) {
+                    return { ...reminder, completed: true };
+                }
+                return reminder;
+            });
+            
+            saveReminders();
+            renderReminders();
+            generateCalendar();
+            updateStats();
+            updateCategoryCounts();
+            
+            showNotification('Promemoria confermato!');
+            closeViewReminderModal();
+        }
+
+        // Update statistics
+        function updateStats() {
+            let filteredReminders = reminders;
+            if (currentCategory !== 'all') {
+                filteredReminders = reminders.filter(reminder => reminder.category === currentCategory);
+            }
+            
+            const total = filteredReminders.length;
+            const completed = filteredReminders.filter(r => r.completed).length;
+            const upcoming = filteredReminders.filter(r => {
+                const reminderDate = new Date(r.date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return !r.completed && reminderDate >= today;
+            }).length;
+            const overdue = filteredReminders.filter(r => {
+                const reminderDate = new Date(r.date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return !r.completed && reminderDate < today;
+            }).length;
+            
+            document.getElementById('total-reminders').textContent = total;
+            document.getElementById('completed-reminders').textContent = completed;
+            document.getElementById('upcoming-reminders-count').textContent = upcoming;
+            document.getElementById('overdue-reminders').textContent = overdue;
+            
+            // Update category chart
+            updateCategoryChart();
+            
+            // Update completion chart
+            updateCompletionChart();
+        }
+
+        function updateCategoryChart() {
+            let filteredReminders = reminders;
+            if (currentCategory !== 'all') {
+                filteredReminders = reminders.filter(reminder => reminder.category === currentCategory);
+            }
+            
+            const categoryCounts = {};
+            categories.forEach(category => {
+                categoryCounts[category.id] = filteredReminders.filter(r => r.category === category.id).length;
+            });
+            
+            const maxCount = Math.max(...Object.values(categoryCounts), 1);
+            const chartContainer = document.getElementById('category-chart');
+            chartContainer.innerHTML = '';
+            
+            for (const [categoryId, count] of Object.entries(categoryCounts)) {
+                if (count > 0) {
+                    const category = categories.find(c => c.id === categoryId);
+                    const height = (count / maxCount) * 150;
+                    const bar = document.createElement('div');
+                    bar.className = 'chart-bar';
+                    bar.style.height = `${height}px`;
+                    bar.style.backgroundColor = category ? category.color : '#4361ee';
+                    bar.title = `${category ? category.name : categoryId}: ${count}`;
+                    
+                    const label = document.createElement('div');
+                    label.className = 'chart-label';
+                    label.textContent = (category ? category.name : categoryId).substring(0, 3);
+                    
+                    bar.appendChild(label);
+                    chartContainer.appendChild(bar);
+                }
+            }
+            
+            if (chartContainer.children.length === 0) {
+                chartContainer.innerHTML = '<div class="empty-state"><p>Nessun dato disponibile</p></div>';
+            }
+        }
+
+        function updateCompletionChart() {
+            let filteredReminders = reminders;
+            if (currentCategory !== 'all') {
+                filteredReminders = reminders.filter(reminder => reminder.category === currentCategory);
+            }
+            
+            const completed = filteredReminders.filter(r => r.completed).length;
+            const pending = filteredReminders.length - completed;
+            const maxCount = Math.max(completed, pending, 1);
+            const chartContainer = document.getElementById('completion-chart');
+            chartContainer.innerHTML = '';
+            
+            if (filteredReminders.length === 0) {
+                chartContainer.innerHTML = '<div class="empty-state"><p>Nessun dato disponibile</p></div>';
+                return;
+            }
+            
+            // Completed bar
+            const completedHeight = (completed / maxCount) * 150;
+            const completedBar = document.createElement('div');
+            completedBar.className = 'chart-bar';
+            completedBar.style.height = `${completedHeight}px`;
+            completedBar.style.backgroundColor = '#4cc9f0';
+            completedBar.title = `Completati: ${completed}`;
+            
+            const completedLabel = document.createElement('div');
+            completedLabel.className = 'chart-label';
+            completedLabel.textContent = 'Comp';
+            
+            completedBar.appendChild(completedLabel);
+            chartContainer.appendChild(completedBar);
+            
+            // Pending bar
+            const pendingHeight = (pending / maxCount) * 150;
+            const pendingBar = document.createElement('div');
+            pendingBar.className = 'chart-bar';
+            pendingBar.style.height = `${pendingHeight}px`;
+            pendingBar.style.backgroundColor = '#7209b7';
+            pendingBar.title = `In sospeso: ${pending}`;
+            
+            const pendingLabel = document.createElement('div');
+            pendingLabel.className = 'chart-label';
+            pendingLabel.textContent = 'Sosp';
+            
+            pendingBar.appendChild(pendingLabel);
+            chartContainer.appendChild(pendingBar);
+        }
+
+        // Update category counts
+        function updateCategoryCounts() {
+            categories.forEach(category => {
+                const count = reminders.filter(r => r.category === category.id).length;
+                const countElement = document.getElementById(`${category.id}-count`);
+                if (countElement) {
+                    countElement.textContent = `${count} promemoria`;
+                }
+            });
+        }
+
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            if (date.toDateString() === now.toDateString()) {
+                return 'Oggi';
+            } else if (date.toDateString() === tomorrow.toDateString()) {
+                return 'Domani';
+            } else {
+                const day = date.getDate();
+                const month = date.getMonth() + 1;
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+        }
+
+        // Delete reminder
+        function deleteReminder(id) {
+            if (confirm('Sei sicuro di voler eliminare questo promemoria?')) {
+                reminders = reminders.filter(reminder => reminder.id !== id);
+                saveReminders();
+                renderReminders();
+                generateCalendar();
+                updateStats();
+                updateCategoryCounts();
+                
+                showNotification('Promemoria eliminato!');
+            }
+        }
+
+        // Show notification
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.position = 'fixed';
+            notification.style.bottom = '70px';
+            notification.style.left = '50%';
+            notification.style.transform = 'translateX(-50%)';
+            notification.style.backgroundColor = 'var(--primary)';
+            notification.style.color = 'white';
+            notification.style.padding = '12px 24px';
+            notification.style.borderRadius = '50px';
+            notification.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+            notification.style.zIndex = '1000';
+            notification.style.opacity = '0';
+            notification.style.transition = 'opacity 0.3s ease';
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => {
+                notification.style.opacity = '1';
+            }, 10);
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Helper function to generate random color
+        function getRandomColor() {
+            const colors = [
+                '#4361ee', '#3a0ca3', '#7209b7', '#f72585', 
+                '#4cc9f0', '#560bad', '#b5179e', '#f15bb5',
+                '#fb5607', '#ff006e', '#8338ec', '#3a86ff'
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // ===== NUOVE FUNZIONALITÀ AGGIUNTE =====
+
+        // Tracking eventi
+        function trackEvent(eventName) {
+            console.log('Event:', eventName, new Date().toISOString());
+            // Qui aggiungerai Google Analytics dopo
+        }
+
+        // Donation System
+        function setupDonationBanner() {
+            if (!localStorage.getItem('firstUseDate')) {
+                localStorage.setItem('firstUseDate', new Date().toISOString());
+            }
+
+            function shouldShowDonationBanner() {
+                const firstUse = new Date(localStorage.getItem('firstUseDate'));
+                const daysSinceFirstUse = (new Date() - firstUse) / (1000 * 60 * 60 * 24);
+                const reminderCount = reminders.length;
+                
+                return daysSinceFirstUse >= 3 && 
+                       reminderCount >= 5 && 
+                       !localStorage.getItem('donationShown');
+            }
+
+            if (shouldShowDonationBanner()) {
+                setTimeout(() => {
+                    document.getElementById('donation-banner').style.display = 'block';
+                    trackEvent('donation_banner_shown');
+                }, 10000);
+            }
+        }
+
+        function showDonationOptions() {
+            trackEvent('donation_clicked');
+            
+            const options = [
+                { amount: '2.99', text: '☕ Caffè dello sviluppatore' },
+                { amount: '4.99', text: '🍕 Pizza della produttività' },
+                { amount: '9.99', text: '🚀 Rocket boost' }
+            ];
+            
+            let message = 'Scegli il tuo supporto:\n\n';
+            options.forEach((opt, index) => {
+                message += `${index + 1}. ${opt.text} - €${opt.amount}\n`;
+            });
+            
+            const choice = prompt(message + '\nInserisci 1, 2 o 3:');
+            if (choice && ['1','2','3'].includes(choice)) {
+                const selected = options[parseInt(choice) - 1];
+                alert(`Grazie mille! 💖\nHai scelto: ${selected.text}\n\nPagamento in arrivo nella prossima versione!`);
+                trackEvent(`donation_${selected.amount}`);
+            }
+            
+            localStorage.setItem('donationShown', 'true');
+            closeDonationBanner();
+        }
+
+        function closeDonationBanner() {
+            document.getElementById('donation-banner').style.display = 'none';
+        }
+
+        // Amazon Products
+        function showAmazonProducts() {
+            const reminderCount = reminders.length;
+            if (reminderCount >= 10 && !localStorage.getItem('amazonShown')) {
+                document.getElementById('amazon-products').style.display = 'block';
+                localStorage.setItem('amazonShown', 'true');
+                trackEvent('amazon_products_shown');
+            }
+        }
+
+        // Backup System
+        function exportData() {
+            trackEvent('export_data');
+            
+            const data = {
+                reminders: reminders,
+                categories: categories,
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lifeorganizer-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Backup esportato! Salva il file in un posto sicuro.');
+        }
+
+        function importData(event) {
+            trackEvent('import_data');
+            
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (confirm('ATTENZIONE: Importare i dati?\nI dati attuali verranno SOVRASCRITTI.')) {
+                        reminders = data.reminders || [];
+                        categories = data.categories || [];
+                        
+                        saveReminders();
+                        saveCategories();
+                        renderReminders();
+                        generateCalendar();
+                        updateStats();
+                        updateCategoryCounts();
+                        
+                        showNotification('Dati importati con successo! ✅');
+                        trackEvent('import_success');
+                    }
+                } catch (error) {
+                    alert('❌ Errore: file non valido o corrotto');
+                    trackEvent('import_error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Privacy Policy
+        function showPrivacyPolicy() {
+            const policy = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: var(--card-bg); padding: 20px; border-radius: 15px; max-width: 500px; max-height: 80vh; overflow-y: auto;">
+                        <h2>Privacy Policy</h2>
+                        <p><strong>LifeOrganizer</strong> rispetta la tua privacy:</p>
+                        <ul>
+                            <li>✅ Tutti i dati sono salvati SOLO sul tuo dispositivo</li>
+                            <li>✅ Nessun dato viene inviato a server esterni</li>
+                            <li>✅ Nessun tracking invasivo</li>
+                            <li>✅ App 100% offline</li>
+                        </ul>
+                        <button onclick="this.parentElement.parentElement.remove()" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 10px; margin-top: 15px;">Chiudi</button>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', policy);
+        }
+
+        // Service Worker per PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(console.error);
+        }
+
+        // Init migliorato
+        function enhancedInit() {
+            init(); // La tua init originale
+            
+            // Nuove funzionalità
+            setTimeout(() => {
+                setupDonationBanner();
+                showAmazonProducts();
+                trackEvent('app_loaded_enhanced');
+            }, 2000);
+        }
+
+        // Sostituisci la chiamata originale
+        document.addEventListener('DOMContentLoaded', enhancedInit);
+    </script>
+</body>
+</html>
